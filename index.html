@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <title>EunyulFirstBirthday</title>
+        <base href="/">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+        <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"> -->
+        
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+        
+        <!-- Font -->
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@1.0/nanumsquare.css">
+        
+        <!-- AOS -->
+        <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+        
+        <!-- Matter.js -->
+        <script src="https://cdn.rawgit.com/liabru/matter-js/306dc024/build/matter.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.rawgit.com/liabru/matter-wrap/43be2639/build/matter-wrap.min.js" crossorigin="anonymous"></script>
+
+        <!-- Image lazy Loading -->
+        <script src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
+
+        <style>
+            
+        </style>
+
+    </head>
+
+    <body>
+
+        <div class="position-absolute">
+            <app-root></app-root>
+            <canvas id="bg" class="background"></canvas>
+        </div>
+
+        <script>
+            const observer = lozad();
+            observer.observe();
+            console.log( 'observer: ', observer );
+        </script>
+
+        <script>
+            console.log( 1 );
+            // plugin
+            Matter.use('matter-wrap');
+
+            let floatyBubbles = {
+                // customizable options (passed into init function)
+                options: {
+                    canvasSelector: '',				// to find <canvas> in DOM to draw on
+                    radiusRange: [10, 50],			// random range of body radii
+                    xVarianceRange: [-0.5, 0.5],	// random range of x velocity scaling on bodies
+                    yVarianceRange: [0.5, 1.5],		// random range of y velocity scaling on bodies
+                    airFriction: 0.03,				// air friction of bodies
+                    opacity: 0.3,						// opacity of bodies
+                    collisions: true,				// do bodies collide or pass through
+                    scrollVelocity: 0.025,			// scaling of scroll delta to velocity applied to bodies
+                    pixelsPerBody: 50000,			// viewport pixels required for each body added
+
+                    // colors to cycle through to fill bodies
+                    colors: ['#e4e4cc', '#e1d2c4', '#d1e4df'],
+                    images: [
+                    'alien.svg',
+                    'earth.svg',
+                    'galaxy.svg',
+                    'meteor.svg',
+                    'meteorite.svg',
+                    'moon.svg',
+                    'planet-earth.svg',
+                    'planet.svg',
+                    'spiral-galaxy.svg',
+                    'ufo.svg',
+                    ]
+                },
+
+                // throttling intervals (in ms)
+                scrollDelay: 100,
+                resizeDelay: 400,
+
+                // throttling variables and timeouts
+                lastOffset: undefined,
+                scrollTimeout: undefined,
+                resizeTimeout: undefined,
+
+                // Matter.js objects
+                engine: undefined,
+                render: undefined,
+                runner: undefined,
+                bodies: undefined,
+
+                // kicks things off
+                init(options) {
+                    // override default options with incoming options
+                    this.options = Object.assign({}, this.options, options);
+
+                    let viewportWidth = document.documentElement.clientWidth;
+                    let viewportHeight = document.documentElement.clientHeight;
+
+                    // let viewportWidth = document.documentElement.scrollWidth;
+                    // let viewportHeight = document.documentElement.scrollHeight;
+
+                    // let viewportWidth = document.documentElement.clientWidth;
+                    // let viewportHeight = document.documentElement.scrollHeight;
+
+                    this.lastOffset = window.pageYOffset;
+                    this.scrollTimeout = null;
+                    this.resizeTimeout = null;
+                
+                    // engine
+                    this.engine = Matter.Engine.create();
+                    this.engine.world.gravity.y = 0;
+                
+                    // render
+                    this.render = Matter.Render.create({
+                        canvas: document.querySelector(this.options.canvasSelector),
+                        engine: this.engine,
+                        options: {
+                            width: viewportWidth,
+                            height: viewportHeight,
+                            wireframes: false,
+                            background: 'transparent'
+                        }
+                    });
+                    Matter.Render.run(this.render);
+                
+                    // runner
+                    this.runner = Matter.Runner.create();
+                    Matter.Runner.run(this.runner, this.engine);
+                
+                    // bodies
+                    this.bodies = [];
+                    let totalBodies = Math.round(viewportWidth * viewportHeight / this.options.pixelsPerBody);
+                    for (let i = 0; i <= totalBodies; i++) {
+                        let body = this.createBody(viewportWidth, viewportHeight);
+                        this.bodies.push(body);
+                    }
+                    Matter.World.add(this.engine.world, this.bodies);
+
+                    // events
+                    window.addEventListener('scroll', this.onScrollThrottled.bind(this));
+                    window.addEventListener('resize', this.onResizeThrottled.bind(this));
+                },
+                
+                // stop all the things
+                shutdown() {
+                    Matter.Engine.clear(this.engine);
+                    Matter.Render.stop(this.render);
+                    Matter.Runner.stop(this.runner);
+
+                    window.removeEventListener('scroll', this.onScrollThrottled);
+                    window.removeEventListener('resize', this.onResizeThrottled);
+                },
+                
+                // random number generator
+                randomize(range) {
+                    let [min, max] = range;
+                    return Math.random() * (max - min) + min;
+                },
+                
+                // create body with some random parameters
+                createBody(viewportWidth, viewportHeight) {
+                    let x = this.randomize([0, viewportWidth]);
+                    let y = this.randomize([0, viewportHeight]);
+                    let radius = this.randomize(this.options.radiusRange);
+                    // let color = this.options.colors[this.bodies.length % this.options.colors.length];
+                    let image = this.options.images[this.bodies.length % this.options.images.length];
+                
+                    return Matter.Bodies.circle(x, y, radius, {
+                        render: {
+                            // background: './assets/space/' + image,
+                            sprite: {
+                                texture: './assets/space/' + image,
+                                xScale: 0.082,
+                                yScale: 0.082
+                            },
+                            // fillStyle: color,
+                            opacity: this.options.opacity
+                        },
+                        frictionAir: this.options.airFriction,
+                        collisionFilter: {
+                            group: this.options.collisions ? 1 : -1
+                        },
+                        plugin: {
+                            wrap: {
+                                min: { x: 0, y: 0 },
+                                max: { x: viewportWidth, y: viewportHeight }
+                            }
+                        }
+                    });
+                },
+                
+                // enforces throttling of scroll handler
+                onScrollThrottled() {
+                    if (!this.scrollTimeout) {
+                        this.scrollTimeout = setTimeout(this.onScroll.bind(this), this.scrollDelay);
+                    }
+                },
+                
+                // applies velocity to bodies based on scrolling with some randomness
+                onScroll() {
+                    this.scrollTimeout = null;
+
+                    let delta = (this.lastOffset - window.pageYOffset) * this.options.scrollVelocity;
+                    this.bodies.forEach((body) => {
+                        Matter.Body.setVelocity(body, {
+                            x: body.velocity.x + delta * this.randomize(this.options.xVarianceRange),
+                            y: body.velocity.y + delta * this.randomize(this.options.yVarianceRange)
+                        });
+                    });
+                
+                    this.lastOffset = window.pageYOffset;
+                },
+                
+                // enforces throttling of resize handler
+                onResizeThrottled() {
+                    if (!this.resizeTimeout) {
+                        this.resizeTimeout = setTimeout(this.onResize.bind(this), this.resizeDelay);
+                    }
+                },
+                
+                // restart everything with the new viewport size
+                onResize() {
+                    this.shutdown();
+                    this.init();
+                }
+            };
+
+            // wait for DOM to load
+            window.addEventListener('DOMContentLoaded', () => {
+                // start floaty bubbles background
+                Object.create(floatyBubbles).init({
+                    canvasSelector: '#bg'
+                });
+            });
+            console.log( 2 );
+
+        </script>
+        
+        <!-- AOS -->
+        <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+        <script>
+            // AOS.init();
+
+            // You can also pass an optional settings object
+            // below listed default settings
+            AOS.init({
+                // Global settings:
+                disable: false, // accepts following values: 'phone', 'tablet', 'mobile', boolean, expression or function
+                startEvent: 'DOMContentLoaded', // name of the event dispatched on the document, that AOS should initialize on
+                initClassName: 'aos-init', // class applied after initialization
+                animatedClassName: 'aos-animate', // class applied on animation
+                useClassNames: false, // if true, will add content of `data-aos` as classes on scroll
+                disableMutationObserver: false, // disables automatic mutations' detections (advanced)
+                debounceDelay: 50, // the delay on debounce used while resizing window (advanced)
+                throttleDelay: 99, // the delay on throttle used while scrolling the page (advanced)
+                
+
+                // Settings that can be overridden on per-element basis, by `data-aos-*` attributes:
+                offset: 120, // offset (in px) from the original trigger point
+                delay: 0, // values from 0 to 3000, with step 50ms
+                duration: 400, // values from 0 to 3000, with step 50ms
+                easing: 'ease', // default easing for AOS animations
+                once: false, // whether animation should happen only once - while scrolling down
+                mirror: false, // whether elements should animate out while scrolling past them
+                anchorPlacement: 'top-bottom', // defines which position of the element regarding to window should trigger the animation
+            });
+            console.log( 'asdasd' );
+        </script>
+    <script src="runtime-es2015.js" type="module"></script><script src="runtime-es5.js" nomodule defer></script><script src="polyfills-es5.js" nomodule defer></script><script src="polyfills-es2015.js" type="module"></script><script src="styles-es2015.js" type="module"></script><script src="styles-es5.js" nomodule defer></script><script src="vendor-es2015.js" type="module"></script><script src="vendor-es5.js" nomodule defer></script><script src="main-es2015.js" type="module"></script><script src="main-es5.js" nomodule defer></script></body>
+
+</html>
